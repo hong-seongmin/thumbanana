@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, HTTPException, status
+from fastapi import APIRouter, Depends, Query, HTTPException, status, Request
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc
 from typing import List, Optional, Dict, Any
@@ -9,6 +9,7 @@ from app.database import get_db
 from app.models.generation import Generation, Image as ImageModel
 from app.models.user import User
 from app.api.auth import require_auth
+from app.utils.i18n import get_user_language, get_api_error_message
 
 router = APIRouter()
 
@@ -137,10 +138,13 @@ async def get_user_stats(
 @router.delete("/{generation_id}")
 async def delete_generation(
     generation_id: int,
+    request: Request,
     current_user: User = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
     """특정 생성 기록 삭제 (실제 DB에서 삭제)"""
+    
+    language = get_user_language(request)
     
     # 해당 생성 기록 조회 (소유자 확인)
     generation = db.query(Generation)\
@@ -149,9 +153,10 @@ async def delete_generation(
         .first()
     
     if not generation:
+        error_message = get_api_error_message("history", "generation_not_found", language)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="해당 생성 기록을 찾을 수 없습니다."
+            detail=error_message
         )
     
     # 관련 이미지 파일들도 실제로 삭제
@@ -174,16 +179,20 @@ async def delete_generation(
     db.delete(generation)
     db.commit()
     
-    return {"message": "생성 기록이 삭제되었습니다.", "generation_id": generation_id}
+    success_message = get_api_error_message("history", "deletion_success", language)
+    return {"message": success_message, "generation_id": generation_id}
 
 
 @router.post("/{generation_id}/regenerate")
 async def regenerate_thumbnail(
     generation_id: int,
+    request: Request,
     current_user: User = Depends(require_auth),
     db: Session = Depends(get_db)
 ):
     """기존 생성 기록을 바탕으로 재생성 (실제 Gemini API 호출)"""
+    
+    language = get_user_language(request)
     
     # 원본 생성 기록 조회
     original_generation = db.query(Generation)\
@@ -192,9 +201,10 @@ async def regenerate_thumbnail(
         .first()
     
     if not original_generation:
+        error_message = get_api_error_message("history", "generation_not_found", language)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="해당 생성 기록을 찾을 수 없습니다."
+            detail=error_message
         )
     
     # 참고 이미지 로딩
@@ -222,9 +232,10 @@ async def regenerate_thumbnail(
         )
         
         if not results:
+            error_message = get_api_error_message("history", "regeneration_failed", language)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="재생성에 실패했습니다."
+                detail=error_message
             )
         
         # 새로운 Generation 레코드 생성
@@ -279,16 +290,18 @@ async def regenerate_thumbnail(
         
         db.commit()
         
+        success_message = get_api_error_message("history", "regeneration_success", language)
         return {
             "generation_id": new_generation.id,
             "status": "completed",
-            "message": f"재생성 완료! {len(results)}장의 썸네일이 생성되었습니다.",
+            "message": f"재생성 완료! {len(results)}{success_message}",
             "images": saved_images
         }
         
     except Exception as e:
         print(f"재생성 실패: {e}")
+        error_message = get_api_error_message("history", "regeneration_failed", language)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="재생성 중 오류가 발생했습니다."
+            detail=error_message
         )

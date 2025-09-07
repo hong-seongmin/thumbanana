@@ -8,6 +8,7 @@ from datetime import datetime
 from app.database import get_db
 from app.services.auth_service import AuthService
 from app.models.user import User
+from app.utils.i18n import get_user_language, get_api_error_message
 
 router = APIRouter()
 security = HTTPBearer(auto_error=False)
@@ -63,12 +64,17 @@ async def get_current_user(
 
 
 # 의존성: 로그인 필수
-async def require_auth(current_user: User = Depends(get_current_user)) -> User:
+async def require_auth(
+    request: Request, 
+    current_user: User = Depends(get_current_user)
+) -> User:
     """인증이 필요한 엔드포인트용 의존성"""
     if not current_user:
+        language = get_user_language(request)
+        error_message = get_api_error_message("auth", "user_not_found", language)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="로그인이 필요합니다.",
+            detail=error_message,
             headers={"WWW-Authenticate": "Bearer"},
         )
     return current_user
@@ -77,34 +83,41 @@ async def require_auth(current_user: User = Depends(get_current_user)) -> User:
 @router.post("/register", response_model=UserResponse)
 async def register(
     user_data: UserCreate,
+    request: Request,
     db: Session = Depends(get_db)
 ):
     """회원가입"""
+    language = get_user_language(request)
+    
     try:
         user = AuthService.create_user(db, user_data.email, user_data.password)
         return UserResponse.model_validate(user)
     except HTTPException:
         raise
     except Exception as e:
+        error_message = get_api_error_message("auth", "registration_failed", language)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="회원가입 중 오류가 발생했습니다."
+            detail=error_message
         )
 
 
 @router.post("/login", response_model=LoginResponse)
 async def login(
     user_data: UserLogin,
+    request: Request,
     response: Response,
     db: Session = Depends(get_db)
 ):
     """로그인"""
+    language = get_user_language(request)
     user = AuthService.authenticate_user(db, user_data.email, user_data.password)
     
     if not user:
+        error_message = get_api_error_message("auth", "invalid_credentials", language)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="이메일 또는 비밀번호가 올바르지 않습니다."
+            detail=error_message
         )
     
     # 세션 생성
@@ -120,21 +133,25 @@ async def login(
         samesite="lax"
     )
     
+    success_message = get_api_error_message("auth", "login_success", language)
     return LoginResponse(
         user=UserResponse.model_validate(user),
         access_token=session_id,
-        message="로그인 성공"
+        message=success_message
     )
 
 
 @router.post("/logout")
 async def logout(
+    request: Request,
     response: Response,
     current_user: User = Depends(get_current_user),
     session_id: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
     """로그아웃"""
+    language = get_user_language(request)
+    
     # 세션 ID 추출 (Bearer 토큰 또는 쿠키)
     if not session_id and current_user:
         session_id = None  # get_current_user에서 이미 세션을 확인했으므로
@@ -146,7 +163,8 @@ async def logout(
     # 쿠키 삭제
     response.delete_cookie(key="session_id")
     
-    return {"message": "로그아웃 되었습니다."}
+    logout_message = get_api_error_message("auth", "logout_success", language)
+    return {"message": logout_message}
 
 
 @router.get("/me", response_model=UserResponse)

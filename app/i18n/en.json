@@ -115,6 +115,49 @@
     "title_required": "Title is required.",
     "title_too_long": "Title must be 2000 characters or less."
   },
+  "api_errors": {
+    "auth": {
+      "invalid_credentials": "Invalid email or password.",
+      "email_already_exists": "This email address is already in use.",
+      "user_not_found": "User not found.",
+      "invalid_token": "Invalid token.",
+      "token_expired": "Token has expired. Please log in again.",
+      "registration_failed": "An error occurred during registration.",
+      "login_success": "Login successful",
+      "logout_success": "You have been logged out."
+    },
+    "generation": {
+      "title_required": "Title is required.",
+      "title_too_long": "Title must be 2000 characters or less.",
+      "file_too_large": "File size is too large. Please upload files under 10MB.",
+      "invalid_file_type": "Only image files can be uploaded.",
+      "generation_failed": "Failed to generate thumbnail. Please try again.",
+      "generation_error": "An error occurred during thumbnail generation.",
+      "server_error": "Internal server error occurred.",
+      "request_not_found": "Generation request not found.",
+      "generation_success": " thumbnails were successfully generated.",
+      "gemini_connection_success": "Gemini API connection successful",
+      "gemini_connection_failed": "Gemini API connection failed",
+      "test_failed": "Test failed: {error}"
+    },
+    "history": {
+      "generation_not_found": "Generation record not found.",
+      "access_denied": "Access denied.",
+      "deletion_success": "Generation record has been deleted.",
+      "regeneration_failed": "Regeneration failed.",
+      "regeneration_success": " new thumbnails have been generated.",
+      "invalid_page": "Invalid page number."
+    },
+    "images": {
+      "image_not_found": "Image not found.",
+      "image_file_not_found": "Image file not found.",
+      "invalid_filter_value": "{name} value must be between -2 and 2.",
+      "filter_apply_error": "An error occurred while applying filter.",
+      "invalid_size_format": "Please enter a valid size format (e.g., 1280x720)",
+      "unsupported_resize_method": "Unsupported resize method.",
+      "resize_error": "An error occurred during image resize."
+    }
+  },
   "footer": {
     "copyright": "© 2025 thumbanana. Powered by Gemini 2.5 Flash Image (Nano Banana)",
     "terms": "Terms of Service",

@@ -122,6 +122,25 @@ def get_localized_message(message_key: str, language: str, **kwargs) -> str:
     return message
 
 
+def get_api_error_message(category: str, error_key: str, language: str, **kwargs) -> str:
+    """API 오류 메시지 반환"""
+    translations = load_translations(language)
+    
+    # api_errors 섹션에서 메시지 찾기
+    api_errors = translations.get('api_errors', {})
+    category_errors = api_errors.get(category, {})
+    message = category_errors.get(error_key, f"{category}.{error_key}")
+    
+    # 포매팅 적용
+    if kwargs:
+        try:
+            return message.format(**kwargs)
+        except (KeyError, ValueError):
+            return message
+    
+    return message
+
+
 # 템플릿에서 사용할 헬퍼 함수들
 def get_page_title(page_key: str, language: str) -> str:
     """페이지별 타이틀 반환"""

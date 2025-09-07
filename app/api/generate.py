@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -13,6 +13,7 @@ from app.models.user import User
 from app.services.gemini_service import GeminiService
 from app.config import get_settings
 from app.api.auth import get_current_user
+from app.utils.i18n import get_user_language, get_api_error_message
 
 router = APIRouter()
 settings = get_settings()
@@ -39,6 +40,7 @@ class GenerateResponse(BaseModel):
 
 @router.post("/", response_model=GenerateResponse)
 async def generate_thumbnail(
+    request: Request,
     title: str = Form(..., max_length=2000),
     style_preset: str = Form("bold"),
     variants: int = Form(1),
@@ -48,13 +50,17 @@ async def generate_thumbnail(
 ):
     """썸네일 생성 API"""
     
+    language = get_user_language(request)
+    
     try:
         # 입력 검증
         if not title.strip():
-            raise HTTPException(status_code=400, detail="제목은 필수 입력 항목입니다.")
+            error_message = get_api_error_message("generation", "title_required", language)
+            raise HTTPException(status_code=400, detail=error_message)
         
         if len(title) > 2000:
-            raise HTTPException(status_code=400, detail="제목은 2000자 이하로 입력해주세요.")
+            error_message = get_api_error_message("generation", "title_too_long", language)
+            raise HTTPException(status_code=400, detail=error_message)
             
         # 비로그인 사용자 제한
         if not current_user:
@@ -81,14 +87,13 @@ async def generate_thumbnail(
         for ref_image in reference_images:
             # 파일 크기 검증
             if ref_image.size > settings.max_file_size:
-                raise HTTPException(
-                    status_code=400, 
-                    detail=f"참고 이미지 크기는 {settings.max_file_size // (1024*1024)}MB 이하여야 합니다."
-                )
+                error_message = get_api_error_message("generation", "file_too_large", language)
+                raise HTTPException(status_code=400, detail=error_message)
             
             # 파일 형식 검증
             if not ref_image.content_type.startswith('image/'):
-                raise HTTPException(status_code=400, detail="이미지 파일만 업로드 가능합니다.")
+                error_message = get_api_error_message("generation", "invalid_file_type", language)
+                raise HTTPException(status_code=400, detail=error_message)
             
             # 파일 저장
             file_content = await ref_image.read()
@@ -142,10 +147,11 @@ async def generate_thumbnail(
             
             if not results:
                 generation.status = "error"
-                generation.error_message = "이미지 생성에 실패했습니다."
+                error_message = get_api_error_message("generation", "generation_failed", language)
+                generation.error_message = error_message
                 db.commit()
                 
-                raise HTTPException(status_code=500, detail="썸네일 생성에 실패했습니다. 다시 시도해주세요.")
+                raise HTTPException(status_code=500, detail=error_message)
             
             # 생성된 이미지 저장
             saved_images = []
@@ -189,10 +195,11 @@ async def generate_thumbnail(
             
             print(f"✅ 썸네일 생성 완료: ID={generation.id}, 이미지 {len(saved_images)}장")
             
+            success_message = get_api_error_message("generation", "generation_success", language)
             return GenerateResponse(
                 generation_id=generation.id,
-                status="completed",
-                message=f"{len(saved_images)}장의 썸네일이 성공적으로 생성되었습니다.",
+                status="completed", 
+                message=f"{len(saved_images)}{success_message}",
                 images=saved_images
             )
             
@@ -203,26 +210,31 @@ async def generate_thumbnail(
             db.commit()
             
             print(f"❌ 썸네일 생성 실패: {e}")
-            raise HTTPException(status_code=500, detail="썸네일 생성 중 오류가 발생했습니다.")
+            error_message = get_api_error_message("generation", "generation_error", language)
+            raise HTTPException(status_code=500, detail=error_message)
             
     except HTTPException:
         raise
     except Exception as e:
         print(f"❌ 예상치 못한 오류: {e}")
-        raise HTTPException(status_code=500, detail="서버 내부 오류가 발생했습니다.")
+        error_message = get_api_error_message("generation", "server_error", language)
+        raise HTTPException(status_code=500, detail=error_message)
 
 
 @router.get("/{generation_id}/status")
 async def get_generation_status(
     generation_id: int,
+    request: Request,
     db: Session = Depends(get_db)
 ):
     """생성 상태 확인 API"""
     
+    language = get_user_language(request)
     generation = db.query(Generation).filter(Generation.id == generation_id).first()
     
     if not generation:
-        raise HTTPException(status_code=404, detail="생성 요청을 찾을 수 없습니다.")
+        error_message = get_api_error_message("generation", "request_not_found", language)
+        raise HTTPException(status_code=404, detail=error_message)
     
     images = []
     if generation.status == "completed":
@@ -249,14 +261,19 @@ async def get_generation_status(
 
 
 @router.get("/test")
-async def test_gemini_connection():
+async def test_gemini_connection(request: Request):
     """Gemini API 연결 테스트"""
+    
+    language = get_user_language(request)
     
     try:
         is_healthy = await gemini_service.health_check()
         if is_healthy:
-            return {"status": "success", "message": "Gemini API 연결 정상"}
+            success_message = get_api_error_message("generation", "gemini_connection_success", language)
+            return {"status": "success", "message": success_message}
         else:
-            return {"status": "error", "message": "Gemini API 연결 실패"}
+            error_message = get_api_error_message("generation", "gemini_connection_failed", language)
+            return {"status": "error", "message": error_message}
     except Exception as e:
-        return {"status": "error", "message": f"테스트 실패: {str(e)}"}
+        error_message = get_api_error_message("generation", "test_failed", language, error=str(e))
+        return {"status": "error", "message": error_message}

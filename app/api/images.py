@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from pathlib import Path
@@ -8,6 +8,7 @@ import uuid
 from app.database import get_db
 from app.models.generation import Image as ImageModel
 from app.config import get_settings
+from app.utils.i18n import get_user_language, get_api_error_message
 
 router = APIRouter()
 settings = get_settings()
@@ -16,14 +17,17 @@ settings = get_settings()
 @router.get("/{image_id}/download")
 async def download_image(
     image_id: int,
+    request: Request,
     db: Session = Depends(get_db)
 ):
     """이미지 다운로드 API"""
     
+    language = get_user_language(request)
     image_record = db.query(ImageModel).filter(ImageModel.id == image_id).first()
     
     if not image_record:
-        raise HTTPException(status_code=404, detail="이미지를 찾을 수 없습니다.")
+        error_message = get_api_error_message("images", "image_not_found", language)
+        raise HTTPException(status_code=404, detail=error_message)
     
     # 가장 최신 처리된 이미지 경로 선택
     image_path = None
@@ -36,7 +40,8 @@ async def download_image(
     
     file_path = Path(image_path)
     if not file_path.exists():
-        raise HTTPException(status_code=404, detail="이미지 파일을 찾을 수 없습니다.")
+        error_message = get_api_error_message("images", "image_file_not_found", language)
+        raise HTTPException(status_code=404, detail=error_message)
     
     # 파일명 생성
     filename = f"thumbanana_thumbnail_{image_id}.{image_record.format}"
