@@ -56,38 +56,42 @@
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <label class="cursor-pointer">
                         <input type="radio" x-model="form.style" value="bold" class="sr-only">
-                        <div class="border-2 rounded-lg p-4 text-center transition-all"
-                             :class="form.style === 'bold' ? 'border-orange-500 bg-orange-50' : 'border-gray-300 hover:border-gray-400'">
-                            <div class="text-2xl mb-2">🔥</div>
+                        <div class="border-2 rounded-lg p-4 text-center transition-all transform hover:scale-102 relative"
+                             :class="form.style === 'bold' ? 'border-orange-500 bg-orange-50 shadow-lg ring-2 ring-orange-400 scale-105 font-bold' : 'border-gray-300 hover:border-gray-400'">
+                            <div class="text-2xl mb-2" :class="form.style === 'bold' ? 'animate-pulse' : ''">🔥</div>
                             <div class="font-medium">{{ t.home.styles.bold.split(' - ')[0] }}</div>
                             <div class="text-xs text-gray-500">{{ t.home.styles.bold.split(' - ')[1] }}</div>
+                            <div x-show="form.style === 'bold'" class="absolute -top-2 -right-2 bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">✓</div>
                         </div>
                     </label>
                     <label class="cursor-pointer">
                         <input type="radio" x-model="form.style" value="minimal" class="sr-only">
-                        <div class="border-2 rounded-lg p-4 text-center transition-all"
-                             :class="form.style === 'minimal' ? 'border-orange-500 bg-orange-50' : 'border-gray-300 hover:border-gray-400'">
-                            <div class="text-2xl mb-2">✨</div>
+                        <div class="border-2 rounded-lg p-4 text-center transition-all transform hover:scale-102 relative"
+                             :class="form.style === 'minimal' ? 'border-orange-500 bg-orange-50 shadow-lg ring-2 ring-orange-400 scale-105 font-bold' : 'border-gray-300 hover:border-gray-400'">
+                            <div class="text-2xl mb-2" :class="form.style === 'minimal' ? 'animate-pulse' : ''">✨</div>
                             <div class="font-medium">{{ t.home.styles.minimal.split(' - ')[0] }}</div>
                             <div class="text-xs text-gray-500">{{ t.home.styles.minimal.split(' - ')[1] }}</div>
+                            <div x-show="form.style === 'minimal'" class="absolute -top-2 -right-2 bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">✓</div>
                         </div>
                     </label>
                     <label class="cursor-pointer">
                         <input type="radio" x-model="form.style" value="comic" class="sr-only">
-                        <div class="border-2 rounded-lg p-4 text-center transition-all"
-                             :class="form.style === 'comic' ? 'border-orange-500 bg-orange-50' : 'border-gray-300 hover:border-gray-400'">
-                            <div class="text-2xl mb-2">🎨</div>
+                        <div class="border-2 rounded-lg p-4 text-center transition-all transform hover:scale-102 relative"
+                             :class="form.style === 'comic' ? 'border-orange-500 bg-orange-50 shadow-lg ring-2 ring-orange-400 scale-105 font-bold' : 'border-gray-300 hover:border-gray-400'">
+                            <div class="text-2xl mb-2" :class="form.style === 'comic' ? 'animate-pulse' : ''">🎨</div>
                             <div class="font-medium">{{ t.home.styles.comic.split(' - ')[0] }}</div>
                             <div class="text-xs text-gray-500">{{ t.home.styles.comic.split(' - ')[1] }}</div>
+                            <div x-show="form.style === 'comic'" class="absolute -top-2 -right-2 bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">✓</div>
                         </div>
                     </label>
                     <label class="cursor-pointer">
                         <input type="radio" x-model="form.style" value="tech" class="sr-only">
-                        <div class="border-2 rounded-lg p-4 text-center transition-all"
-                             :class="form.style === 'tech' ? 'border-orange-500 bg-orange-50' : 'border-gray-300 hover:border-gray-400'">
-                            <div class="text-2xl mb-2">⚡</div>
+                        <div class="border-2 rounded-lg p-4 text-center transition-all transform hover:scale-102 relative"
+                             :class="form.style === 'tech' ? 'border-orange-500 bg-orange-50 shadow-lg ring-2 ring-orange-400 scale-105 font-bold' : 'border-gray-300 hover:border-gray-400'">
+                            <div class="text-2xl mb-2" :class="form.style === 'tech' ? 'animate-pulse' : ''">⚡</div>
                             <div class="font-medium">{{ t.home.styles.tech.split(' - ')[0] }}</div>
                             <div class="text-xs text-gray-500">{{ t.home.styles.tech.split(' - ')[1] }}</div>
+                            <div x-show="form.style === 'tech'" class="absolute -top-2 -right-2 bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">✓</div>
                         </div>
                     </label>
                 </div>

@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     log_file: str = "./logs/app.log"
     
     # Cache
-    cache_ttl: int = 86400  # 24 hours
+    cache_ttl: int = 180  # 3 minutes  
     cache_max_size: int = 1000
 
     class Config:
