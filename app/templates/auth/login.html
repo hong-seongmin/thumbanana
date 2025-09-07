@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t.meta.page_title_login }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <div class="text-center">
+            <h2 class="mt-6 text-3xl font-extrabold text-gray-900">
+                {{ t.auth.login_title_header or '계정에 로그인하세요' }}
+            </h2>
+            <p class="mt-2 text-sm text-gray-600">
+                {{ t.auth.or_text or '또는' }} 
+                <a href="{% if lang == 'en' %}/en{% endif %}/register" class="font-medium text-orange-600 hover:text-orange-500">
+                    {{ t.auth.create_account or '새 계정 만들기' }}
+                </a>
+            </p>
+        </div>
+        
+        <form class="mt-8 space-y-6" x-data="loginForm()" @submit.prevent="login">
+            <div class="space-y-4">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ t.auth.email_label }}
+                    </label>
+                    <input 
+                        id="email" 
+                        name="email" 
+                        type="email" 
+                        required
+                        x-model="form.email"
+                        class="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
+                        placeholder="your@email.com">
+                </div>
+                
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ t.auth.password_label }}
+                    </label>
+                    <input 
+                        id="password" 
+                        name="password" 
+                        type="password" 
+                        required
+                        x-model="form.password"
+                        class="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
+                        placeholder="{{ t.auth.password_placeholder or '비밀번호' }}">
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <input id="remember-me" name="remember-me" type="checkbox" class="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded">
+                    <label for="remember-me" class="ml-2 block text-sm text-gray-900">
+                        {{ t.auth.remember_me or '로그인 상태 유지' }}
+                    </label>
+                </div>
+
+                <div class="text-sm">
+                    <a href="#" class="font-medium text-orange-600 hover:text-orange-500">
+                        {{ t.auth.forgot_password or '비밀번호를 잊으셨나요?' }}
+                    </a>
+                </div>
+            </div>
+
+            <div x-show="error" x-text="error" class="text-red-600 text-sm text-center"></div>
+
+            <div>
+                <button 
+                    type="submit" 
+                    :disabled="loading"
+                    :class="loading ? 'opacity-50 cursor-not-allowed' : ''"
+                    class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                    
+                    <span x-show="!loading">{{ t.auth.login_button }}</span>
+                    <span x-show="loading" class="flex items-center">
+                        <svg class="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        {{ t.auth.logging_in or '로그인 중...' }}
+                    </span>
+                </button>
+            </div>
+            
+            <div class="text-center">
+                <p class="text-sm text-gray-600">
+                    {{ t.auth.no_account or 'thumbanana 계정이 없으신가요?' }} 
+                    <a href="{% if lang == 'en' %}/en{% endif %}/register" class="font-medium text-orange-600 hover:text-orange-500">{{ t.auth.register_link or '지금 가입하세요' }}</a>
+                </p>
+            </div>
+        </form>
+        
+        <!-- 게스트로 계속하기 -->
+        <div class="mt-6 text-center">
+            <div class="relative">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-300" />
+                </div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="px-2 bg-gray-50 text-gray-500">{{ t.auth.or_text or '또는' }}</span>
+                </div>
+            </div>
+            
+            <div class="mt-6">
+                <a href="{% if lang == 'en' %}/en{% endif %}/" class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-500 bg-white hover:bg-gray-50">
+                    {{ t.auth.try_as_guest or '게스트로 체험하기' }}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function loginForm() {
+    return {
+        form: {
+            email: '',
+            password: ''
+        },
+        loading: false,
+        error: '',
+        
+        async login() {
+            this.loading = true;
+            this.error = '';
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(this.form)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('로그인 성공:', result);
+                    
+                    // 메인 페이지로 리다이렉트
+                    window.location.href = '/';
+                } else {
+                    const error = await response.json();
+                    this.error = error.detail || '로그인에 실패했습니다.';
+                }
+            } catch (error) {
+                console.error('로그인 오류:', error);
+                this.error = '네트워크 오류가 발생했습니다. 다시 시도해주세요.';
+            } finally {
+                this.loading = false;
+            }
+        }
+    };
+}
+</script>
+{% endblock %}

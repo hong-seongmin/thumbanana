@@ -1,0 +1,481 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t.meta.page_title_home }}{% endblock %}
+
+{% block content %}
+<div class="text-center mb-12">
+    <h1 class="text-5xl font-bold text-gray-900 mb-4">
+        {{ t.home.hero_title }}
+        <span class="text-orange-500">{{ t.home.hero_highlight }}</span>
+    </h1>
+    <p class="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+        {{ t.home.hero_description }}
+    </p>
+    
+    <div class="flex justify-center space-x-8 text-sm text-gray-500 mb-12">
+        <div class="flex items-center">
+            <span class="w-3 h-3 bg-green-400 rounded-full mr-2"></span>
+            {{ t.home.feature_text_rendering }}
+        </div>
+        <div class="flex items-center">
+            <span class="w-3 h-3 bg-blue-400 rounded-full mr-2"></span>
+            {{ t.home.feature_style_transfer }}
+        </div>
+        <div class="flex items-center">
+            <span class="w-3 h-3 bg-purple-400 rounded-full mr-2"></span>
+            {{ t.home.feature_youtube_optimized }}
+        </div>
+    </div>
+</div>
+
+<!-- Thumbnail Generation Form -->
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white rounded-lg shadow-lg p-8" x-data="thumbnailGenerator()">
+        <form @submit.prevent="generateThumbnail">
+            <!-- Title/Script Input -->
+            <div class="mb-6">
+                <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ t.home.form_title_label }}
+                </label>
+                <textarea
+                    id="title"
+                    x-model="form.title"
+                    placeholder="{{ t.home.form_title_placeholder }}"
+                    class="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                    maxlength="2000"
+                    required
+                ></textarea>
+                <div class="text-right text-xs text-gray-500 mt-1">
+                    <span x-text="form.title.length"></span> / 2,000자
+                </div>
+            </div>
+
+            <!-- Style Preset -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-3">{{ t.home.form_style_label }}</label>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <label class="cursor-pointer">
+                        <input type="radio" x-model="form.style" value="bold" class="sr-only">
+                        <div class="border-2 rounded-lg p-4 text-center transition-all"
+                             :class="form.style === 'bold' ? 'border-orange-500 bg-orange-50' : 'border-gray-300 hover:border-gray-400'">
+                            <div class="text-2xl mb-2">🔥</div>
+                            <div class="font-medium">{{ t.home.styles.bold.split(' - ')[0] }}</div>
+                            <div class="text-xs text-gray-500">{{ t.home.styles.bold.split(' - ')[1] }}</div>
+                        </div>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" x-model="form.style" value="minimal" class="sr-only">
+                        <div class="border-2 rounded-lg p-4 text-center transition-all"
+                             :class="form.style === 'minimal' ? 'border-orange-500 bg-orange-50' : 'border-gray-300 hover:border-gray-400'">
+                            <div class="text-2xl mb-2">✨</div>
+                            <div class="font-medium">{{ t.home.styles.minimal.split(' - ')[0] }}</div>
+                            <div class="text-xs text-gray-500">{{ t.home.styles.minimal.split(' - ')[1] }}</div>
+                        </div>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" x-model="form.style" value="comic" class="sr-only">
+                        <div class="border-2 rounded-lg p-4 text-center transition-all"
+                             :class="form.style === 'comic' ? 'border-orange-500 bg-orange-50' : 'border-gray-300 hover:border-gray-400'">
+                            <div class="text-2xl mb-2">🎨</div>
+                            <div class="font-medium">{{ t.home.styles.comic.split(' - ')[0] }}</div>
+                            <div class="text-xs text-gray-500">{{ t.home.styles.comic.split(' - ')[1] }}</div>
+                        </div>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" x-model="form.style" value="tech" class="sr-only">
+                        <div class="border-2 rounded-lg p-4 text-center transition-all"
+                             :class="form.style === 'tech' ? 'border-orange-500 bg-orange-50' : 'border-gray-300 hover:border-gray-400'">
+                            <div class="text-2xl mb-2">⚡</div>
+                            <div class="font-medium">{{ t.home.styles.tech.split(' - ')[0] }}</div>
+                            <div class="text-xs text-gray-500">{{ t.home.styles.tech.split(' - ')[1] }}</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Reference Images Upload -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-3">
+                    {{ t.home.form_reference_label }}
+                    <span class="text-xs text-gray-500">{{ t.home.form_reference_help }}</span>
+                </label>
+                
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                    <input type="file" id="reference-images" multiple accept="image/*" class="hidden" @change="handleFileUpload">
+                    <label for="reference-images" class="cursor-pointer">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                        </svg>
+                        <div class="mt-2">
+                            <span class="text-gray-600">{{ t.home.upload_click_text or '클릭하여 이미지 업로드' }}</span>
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1">{{ t.home.upload_format_text or 'PNG, JPG, GIF / 최대 10MB' }}</div>
+                    </label>
+                </div>
+                
+                <!-- Uploaded Images Preview -->
+                <div x-show="form.referenceImages.length > 0" class="mt-4">
+                    <div class="grid grid-cols-3 gap-4">
+                        <template x-for="(image, index) in form.referenceImages" :key="index">
+                            <div class="relative">
+                                <img :src="image.preview" class="w-full h-24 object-cover rounded-lg">
+                                <button type="button" @click="removeReferenceImage(index)" 
+                                        class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs hover:bg-red-600">×</button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Generation Options -->
+            <div class="mb-6" x-show="isAuthenticated">
+                <label class="block text-sm font-medium text-gray-700 mb-3">{{ t.home.form_variants_label }}</label>
+                <div class="flex space-x-4">
+                    <label class="flex items-center">
+                        <input type="radio" x-model="form.variants" value="1" class="mr-2">
+                        <span>1장</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" x-model="form.variants" value="2" class="mr-2">
+                        <span>2장</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" x-model="form.variants" value="3" class="mr-2">
+                        <span>3장</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="text-center">
+                <button type="submit" 
+                        :disabled="loading || !form.title.trim()"
+                        class="btn-generate text-white px-10 py-4 rounded-xl text-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                        :class="loading ? 'animate-pulse' : ''">
+                    <span x-show="!loading" class="flex items-center justify-center">
+                        🎨 <span class="ml-2">{{ t.home.generate_button.replace('🎨 ', '') }}</span>
+                    </span>
+                    <span x-show="loading" class="flex items-center justify-center">
+                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        {{ t.home.generating_text or '생성 중...' }}
+                    </span>
+                </button>
+                
+                <div x-show="!isAuthenticated" class="mt-3 text-sm text-gray-500">
+                    {{ t.home.guest_limit or '게스트는 1장만 생성 가능' }} • <a href="{% if lang == 'en' %}/en{% endif %}/register" class="text-orange-500 hover:underline">{{ t.nav.register }}</a>
+                </div>
+            </div>
+        </form>
+
+        <!-- Progress Bar -->
+        <div x-show="loading" class="mt-6">
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-orange-500 h-2 rounded-full transition-all duration-300" :style="`width: ${progress}%`"></div>
+            </div>
+            <div class="text-center text-sm text-gray-600 mt-2">
+                <span x-text="progressMessage"></span>
+            </div>
+        </div>
+        
+        <!-- 썸네일 결과 표시 섹션 -->
+        <div x-show="generationResult" x-transition id="generation-result" class="mt-8 p-6 bg-white rounded-lg shadow-lg border-2 border-orange-200">
+            <h3 class="text-2xl font-bold mb-6 text-center text-gray-800">
+                {{ t.home.result_title }}
+                <span class="text-lg font-normal text-gray-600 block mt-1">
+                    {{ t.home.result_summary or '총' }} <span x-text="generationResult?.images?.length || 0" class="font-bold text-orange-600"></span>{{ t.home.result_unit or '장의 썸네일이 생성되었습니다' }}
+                </span>
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <template x-for="(image, index) in generationResult?.images || []" :key="image.id">
+                    <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+                        <div class="relative mb-4">
+                            <img :src="image.url" :alt="`{{ t.home.generated_thumbnail or '생성된 썸네일' }} ${index + 1}`" 
+                                 class="w-full h-auto rounded-lg shadow-md cursor-pointer border-2 border-gray-200 hover:border-orange-300 transition-colors"
+                                 @click="openImageModal(image.url)"
+                                 loading="lazy">
+                            <div class="absolute top-2 right-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+                                #<span x-text="index + 1"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-xs text-gray-500">
+                                <span>{{ t.home.image_size or '크기' }}: <span x-text="`${image.width}x${image.height}`"></span></span>
+                                <span>{{ t.home.image_format or '형식' }}: <span x-text="image.format.toUpperCase()"></span></span>
+                            </div>
+                            
+                            <div class="flex space-x-2">
+                                <a :href="image.url" :download="`thumbnail_${image.id}.${image.format}`"
+                                   class="flex-1 bg-orange-500 text-white text-center py-2 px-3 rounded-lg hover:bg-orange-600 text-sm font-medium transition-colors">
+                                    {{ t.home.download_button }}
+                                </a>
+                                <button @click="openImageModal(image.url)"
+                                        class="flex-1 bg-gray-500 text-white py-2 px-3 rounded-lg hover:bg-gray-600 text-sm font-medium transition-colors">
+                                    {{ t.home.view_large }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+            
+            <div class="mt-6 text-center">
+                <button @click="resetForm()" 
+                        class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 font-medium transition-colors">
+                    {{ t.home.new_generation_button or '🔄 새로 생성하기' }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="mt-20">
+    <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-gray-900 mb-4">{{ t.home.why_title or '왜 thumbanana를 선택해야 할까요?' }}</h2>
+        <p class="text-lg text-gray-600">{{ t.home.why_description or 'Gemini 2.5 Flash Image의 강력한 기능으로 전문가 수준의 썸네일을 만들어보세요' }}</p>
+    </div>
+    
+    <div class="grid md:grid-cols-3 gap-8">
+        <div class="text-center p-6">
+            <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="text-2xl">⚡</span>
+            </div>
+            <h3 class="text-xl font-semibold mb-3">{{ t.home.feature1_title or '즉시 생성' }}</h3>
+            <p class="text-gray-600">{{ t.home.feature1_description or '제목 입력 후 1분 내에 전문적인 썸네일 완성. 복잡한 디자인 도구는 이제 그만!' }}</p>
+        </div>
+        
+        <div class="text-center p-6">
+            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="text-2xl">🎯</span>
+            </div>
+            <h3 class="text-xl font-semibold mb-3">{{ t.home.feature2_title or '브랜드 일관성' }}</h3>
+            <p class="text-gray-600">{{ t.home.feature2_description or '참고 이미지를 활용해 채널만의 독특한 스타일과 브랜드 아이덴티티 유지' }}</p>
+        </div>
+        
+        <div class="text-center p-6">
+            <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="text-2xl">📐</span>
+            </div>
+            <h3 class="text-xl font-semibold mb-3">{{ t.home.feature3_title or '유튜브 최적화' }}</h3>
+            <p class="text-gray-600">{{ t.home.feature3_description or '1280x720, 16:9 비율로 유튜브 권장 사항 완벽 준수. 바로 업로드 가능!' }}</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function thumbnailGenerator() {
+    return {
+        form: {
+            title: '',
+            style: 'bold',
+            referenceImages: [],
+            variants: 1
+        },
+        loading: false,
+        progress: 0,
+        progressMessage: '준비 중...',
+        isAuthenticated: false,
+        generationResult: null, // TODO: 실제 인증 상태 확인
+        
+        init() {
+            // 인증 상태 확인
+            this.checkAuthStatus();
+        },
+        
+        async checkAuthStatus() {
+            try {
+                const response = await fetch('/api/auth/check');
+                if (response.ok) {
+                    const data = await response.json();
+                    this.isAuthenticated = data.authenticated;
+                } else {
+                    this.isAuthenticated = false;
+                }
+            } catch (error) {
+                console.error('Auth check failed:', error);
+                this.isAuthenticated = false;
+            }
+        },
+        
+        handleFileUpload(event) {
+            const files = Array.from(event.target.files).slice(0, 3);
+            this.form.referenceImages = [];
+            
+            files.forEach(file => {
+                if (file.size > 10 * 1024 * 1024) {
+                    alert('파일 크기는 10MB 이하만 가능합니다.');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.form.referenceImages.push({
+                        file: file,
+                        preview: e.target.result
+                    });
+                };
+                reader.readAsDataURL(file);
+            });
+        },
+        
+        removeReferenceImage(index) {
+            this.form.referenceImages.splice(index, 1);
+        },
+        
+        async generateThumbnail() {
+            this.loading = true;
+            this.progress = 0;
+            this.progressMessage = '요청 전송 중...';
+            
+            try {
+                // 프로그레스 시뮬레이션
+                const progressInterval = setInterval(() => {
+                    if (this.progress < 90) {
+                        this.progress += Math.random() * 10;
+                        if (this.progress > 30) this.progressMessage = 'AI가 썸네일 생성 중...';
+                        if (this.progress > 60) this.progressMessage = '최종 처리 중...';
+                    }
+                }, 500);
+                
+                // 실제 API 호출
+                const formData = new FormData();
+                formData.append('title', this.form.title);
+                formData.append('style_preset', this.form.style);
+                formData.append('variants', this.isAuthenticated ? this.form.variants : 1);
+                
+                this.form.referenceImages.forEach((img) => {
+                    formData.append('reference_images', img.file);
+                });
+                
+                const response = await fetch('/api/generate/', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || '썸네일 생성에 실패했습니다.');
+                }
+                
+                const result = await response.json();
+                
+                clearInterval(progressInterval);
+                this.progress = 100;
+                this.progressMessage = '생성 완료!';
+                
+                // 실제 결과 데이터 저장
+                this.generationResult = result;
+                console.log('생성 완료!', result);
+                
+                // 결과 섹션으로 스크롤
+                this.$nextTick(() => {
+                    const resultElement = document.getElementById('generation-result');
+                    if (resultElement) {
+                        resultElement.scrollIntoView({ 
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+                
+            } catch (error) {
+                console.error('생성 실패:', error);
+                alert(error.message);
+            } finally {
+                setTimeout(() => {
+                    this.loading = false;
+                    this.progress = 0;
+                }, 1000);
+            }
+        },
+        
+        openImageModal(imageUrl) {
+            // 이미지를 새 창에서 크게 보기
+            const modal = window.open('', '_blank');
+            modal.document.write(`
+                <html>
+                    <head>
+                        <title>썸네일 미리보기 - thumbanana</title>
+                        <style>
+                            body {
+                                margin: 0;
+                                background: #000;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                min-height: 100vh;
+                                font-family: system-ui, -apple-system, sans-serif;
+                            }
+                            .container {
+                                text-align: center;
+                                padding: 20px;
+                            }
+                            .image {
+                                max-width: 95vw;
+                                max-height: 85vh;
+                                object-fit: contain;
+                                box-shadow: 0 10px 30px rgba(255, 255, 255, 0.1);
+                                border-radius: 8px;
+                            }
+                            .controls {
+                                margin-top: 20px;
+                            }
+                            .btn {
+                                background: #f97316;
+                                color: white;
+                                padding: 8px 16px;
+                                border: none;
+                                border-radius: 6px;
+                                cursor: pointer;
+                                margin: 0 5px;
+                                text-decoration: none;
+                                display: inline-block;
+                            }
+                            .btn:hover {
+                                background: #ea580c;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <img src="${imageUrl}" class="image" alt="썸네일 미리보기">
+                            <div class="controls">
+                                <a href="${imageUrl}" download class="btn">📥 다운로드</a>
+                                <button onclick="window.close()" class="btn">❌ 닫기</button>
+                            </div>
+                        </div>
+                    </body>
+                </html>
+            `);
+        },
+        
+        resetForm() {
+            // 폼 초기화
+            this.form.title = '';
+            this.form.style = 'bold';
+            this.form.referenceImages = [];
+            this.form.variants = this.isAuthenticated ? 1 : 1;
+            this.generationResult = null;
+            this.progress = 0;
+            this.progressMessage = '준비 중...';
+            
+            // 파일 입력 초기화
+            const fileInput = document.getElementById('reference-images');
+            if (fileInput) {
+                fileInput.value = '';
+            }
+            
+            // 페이지 상단으로 스크롤
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+}
+</script>
+{% endblock %}

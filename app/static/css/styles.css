@@ -1,0 +1,272 @@
+/* Custom Styles for thumbanana */
+
+/* 커스텀 색상 */
+:root {
+    --primary-orange: #FF6B35;
+    --primary-orange-hover: #E55B2B;
+    --secondary-blue: #2E86AB;
+    --accent-purple: #A23B72;
+    --warm-yellow: #F18F01;
+    --dark-navy: #0D1821;
+}
+
+/* 애니메이션 */
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.float-animation {
+    animation: float 3s ease-in-out infinite;
+}
+
+.pulse-soft {
+    animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* 커스텀 버튼 */
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-orange) 0%, var(--warm-yellow) 100%);
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--primary-orange-hover) 0%, #E07B00 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(255, 107, 53, 0.3);
+}
+
+/* 강화된 썸네일 생성 버튼 */
+.btn-generate {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 50%, #dc2626 100%);
+    box-shadow: 0 10px 30px rgba(249, 115, 22, 0.4);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-generate::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-generate:hover {
+    border-color: #fbbf24;
+    box-shadow: 0 15px 40px rgba(249, 115, 22, 0.6);
+    transform: translateY(-3px) scale(1.05);
+    background: linear-gradient(135deg, #ea580c 0%, #dc2626 50%, #b91c1c 100%);
+}
+
+.btn-generate:hover::before {
+    left: 100%;
+}
+
+.btn-generate:active {
+    transform: translateY(-1px) scale(1.02);
+}
+
+/* 카드 효과 */
+.card-hover {
+    transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* 그라데이션 텍스트 */
+.gradient-text {
+    background: linear-gradient(135deg, var(--primary-orange) 0%, var(--accent-purple) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* 이미지 업로드 영역 */
+.upload-zone {
+    transition: all 0.3s ease;
+}
+
+.upload-zone:hover {
+    border-color: var(--primary-orange);
+    background-color: rgba(255, 107, 53, 0.05);
+}
+
+/* 프로그레스 바 */
+.progress-bar {
+    background: linear-gradient(90deg, var(--primary-orange) 0%, var(--warm-yellow) 100%);
+}
+
+/* 스타일 프리셋 선택 */
+.style-preset {
+    transition: all 0.3s ease;
+}
+
+.style-preset:hover {
+    transform: scale(1.05);
+}
+
+.style-preset.selected {
+    border-color: var(--primary-orange);
+    background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(241, 143, 1, 0.1) 100%);
+}
+
+/* 반응형 미디어 쿼리 */
+@media (max-width: 768px) {
+    .mobile-stack {
+        flex-direction: column;
+    }
+    
+    .mobile-full {
+        width: 100%;
+    }
+    
+    .mobile-text-center {
+        text-align: center;
+    }
+}
+
+/* 로딩 스피너 */
+.loading-spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid var(--primary-orange);
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 알림 메시지 */
+.alert {
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+}
+
+.alert-success {
+    background-color: #d1fae5;
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+}
+
+.alert-error {
+    background-color: #fed7d7;
+    border: 1px solid #feb2b2;
+    color: #9b2c2c;
+}
+
+.alert-warning {
+    background-color: #fef3cd;
+    border: 1px solid #fde68a;
+    color: #92400e;
+}
+
+/* 이미지 미리보기 */
+.image-preview {
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+.image-preview::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(255, 107, 53, 0.1) 0%, rgba(241, 143, 1, 0.1) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.image-preview:hover::after {
+    opacity: 1;
+}
+
+/* 스크롤바 스타일 */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--primary-orange);
+    border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-orange-hover);
+}
+
+/* 툴팁 */
+.tooltip {
+    position: relative;
+}
+
+.tooltip::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.tooltip:hover::before {
+    opacity: 1;
+}
+
+/* 접근성 개선 */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* 포커스 스타일 */
+.focus-visible:focus {
+    outline: 2px solid var(--primary-orange);
+    outline-offset: 2px;
+}
+
+/* 다크모드 지원 (추후 확장) */
+@media (prefers-color-scheme: dark) {
+    /* 다크모드 스타일은 추후 구현 */
+}

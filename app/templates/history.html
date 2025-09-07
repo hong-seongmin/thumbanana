@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t.meta.page_title_history }}{% endblock %}
+
+{% block content %}
+<div x-data="historyPage()" x-init="loadHistory()">
+    <!-- 헤더 섹션 -->
+    <div class="mb-8">
+        <h1 class="text-4xl font-bold text-gray-900 mb-2">{{ t.history.title }}</h1>
+        <p class="text-gray-600 text-lg">{{ t.history.description }}</p>
+    </div>
+    
+    <!-- 통계 섹션 -->
+    <div x-show="stats" class="grid md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-lg">
+            <div class="text-2xl font-bold" x-text="stats.total_generations"></div>
+            <div class="text-sm opacity-90">{{ t.history.stats_total }}</div>
+        </div>
+        <div class="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg">
+            <div class="text-2xl font-bold" x-text="stats.total_images"></div>
+            <div class="text-sm opacity-90">{{ t.history.stats_images }}</div>
+        </div>
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg">
+            <div class="text-2xl font-bold" x-text="stats.success_rate + '%'"></div>
+            <div class="text-sm opacity-90">{{ t.history.stats_success }}</div>
+        </div>
+        <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-lg">
+            <div class="text-2xl font-bold" x-text="memberDays"></div>
+            <div class="text-sm opacity-90">{{ t.history.stats_member_days }}</div>
+        </div>
+    </div>
+    
+    <!-- 로딩 상태 -->
+    <div x-show="loading" class="text-center py-12">
+        <div class="loading-spinner mx-auto mb-4"></div>
+        <p class="text-gray-600">{{ t.history.loading }}</p>
+    </div>
+    
+    <!-- 빈 상태 -->
+    <div x-show="!loading && items.length === 0" class="text-center py-16">
+        <div class="text-6xl mb-4">🎨</div>
+        <h3 class="text-xl font-semibold text-gray-700 mb-2">{{ t.history.empty_title }}</h3>
+        <p class="text-gray-500 mb-6">{{ t.history.empty_description }}</p>
+        <a href="{% if lang == 'en' %}/en{% endif %}/" class="bg-orange-500 text-white px-8 py-3 rounded-lg hover:bg-orange-600 font-medium transition-colors">
+            {{ t.history.empty_button }}
+        </a>
+    </div>
+    
+    <!-- 히스토리 아이템들 -->
+    <div x-show="!loading && items.length > 0" class="space-y-6">
+        <template x-for="item in items" :key="item.id">
+            <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200">
+                <!-- 헤더 -->
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex-1 mr-4">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2" x-text="item.title"></h3>
+                        <div class="flex flex-wrap gap-3 text-sm text-gray-500">
+                            <span>📅 <span x-text="formatDate(item.created_at)"></span></span>
+                            <span>🎨 <span x-text="getStyleName(item.style_preset)"></span></span>
+                            <span>🖼️ <span x-text="item.images.length"></span>{{ t.history.images_generated or '장 생성' }}</span>
+                            <span>📊 <span x-text="item.variants_requested"></span>{{ t.history.images_requested or '장 요청' }}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="px-3 py-1 rounded-full text-xs font-medium"
+                              :class="getStatusStyle(item.status)"
+                              x-text="getStatusText(item.status)">
+                        </span>
+                        <div class="relative" x-data="{ showMenu: false }">
+                            <button @click="showMenu = !showMenu" class="p-2 text-gray-400 hover:text-gray-600">
+                                ⋮
+                            </button>
+                            <div x-show="showMenu" @click.away="showMenu = false" 
+                                 x-transition class="absolute right-0 mt-2 bg-white rounded-lg shadow-lg border z-10 min-w-40">
+                                <button @click="regenerateItem(item.id); showMenu = false"
+                                        class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                    {{ t.history.regenerate }}
+                                </button>
+                                <button @click="deleteItem(item.id); showMenu = false"
+                                        class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                    {{ t.history.delete }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 이미지 그리드 -->
+                <div x-show="item.images.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+                    <template x-for="(image, index) in item.images" :key="image.id">
+                        <div class="relative group aspect-video">
+                            <img :src="image.url" :alt="`썸네일 ${index + 1}`"
+                                 class="w-full h-full object-cover rounded-lg cursor-pointer transition-transform hover:scale-105"
+                                 @click="openImageModal(image.url)">
+                            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black bg-opacity-50 rounded-lg">
+                                <div class="flex space-x-1">
+                                    <a :href="image.url" :download="`thumbnail_${image.id}.${image.format}`"
+                                       class="text-white hover:text-orange-300 p-1" title="다운로드">
+                                        📥
+                                    </a>
+                                    <button @click="openImageModal(image.url)" 
+                                            class="text-white hover:text-orange-300 p-1" title="크게보기">
+                                        🔍
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="absolute top-1 right-1 bg-black bg-opacity-70 text-white text-xs px-1 rounded">
+                                <span x-text="`${image.width}x${image.height}`"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                
+                <!-- 빈 이미지 상태 -->
+                <div x-show="item.images.length === 0" class="text-center py-8 text-gray-400">
+                    <div class="text-2xl mb-2">📷</div>
+                    <p>이미지가 생성되지 않았습니다</p>
+                </div>
+            </div>
+        </template>
+    </div>
+    
+    <!-- 페이지네이션 -->
+    <div x-show="pagination.pages > 1" class="mt-12 flex justify-center">
+        <nav class="flex items-center space-x-2">
+            <button @click="loadHistory(1)" :disabled="pagination.page === 1"
+                    class="px-3 py-2 text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                    :class="pagination.page === 1 ? 'cursor-not-allowed' : 'cursor-pointer'">
+                ⏮️
+            </button>
+            <button @click="loadHistory(pagination.page - 1)" :disabled="!pagination.has_prev"
+                    class="px-3 py-2 text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                    :class="!pagination.has_prev ? 'cursor-not-allowed' : 'cursor-pointer'">
+                ⬅️
+            </button>
+            
+            <template x-for="pageNum in getPageNumbers()" :key="pageNum">
+                <button @click="loadHistory(pageNum)"
+                        :class="pageNum === pagination.page ? 
+                          'bg-orange-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'"
+                        class="px-4 py-2 border rounded-md font-medium transition-colors"
+                        x-text="pageNum">
+                </button>
+            </template>
+            
+            <button @click="loadHistory(pagination.page + 1)" :disabled="!pagination.has_next"
+                    class="px-3 py-2 text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                    :class="!pagination.has_next ? 'cursor-not-allowed' : 'cursor-pointer'">
+                ➡️
+            </button>
+            <button @click="loadHistory(pagination.pages)" :disabled="pagination.page === pagination.pages"
+                    class="px-3 py-2 text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                    :class="pagination.page === pagination.pages ? 'cursor-not-allowed' : 'cursor-pointer'">
+                ⏭️
+            </button>
+        </nav>
+    </div>
+    
+    <!-- 페이지 정보 -->
+    <div x-show="items.length > 0" class="mt-4 text-center text-sm text-gray-500">
+        <span x-text="`${pagination.page} / ${pagination.pages} 페이지 (총 ${pagination.total}개)`"></span>
+    </div>
+</div>
+
+<script>
+function historyPage() {
+    return {
+        items: [],
+        pagination: {},
+        stats: null,
+        loading: true,
+        
+        get memberDays() {
+            if (!this.stats?.user?.member_since) return 0;
+            const memberSince = new Date(this.stats.user.member_since);
+            const now = new Date();
+            return Math.floor((now - memberSince) / (1000 * 60 * 60 * 24));
+        },
+        
+        async loadHistory(page = 1) {
+            this.loading = true;
+            try {
+                const [historyResponse, statsResponse] = await Promise.all([
+                    fetch(`/api/history?page=${page}&limit=10`),
+                    fetch('/api/history/stats')
+                ]);
+                
+                if (historyResponse.ok) {
+                    const historyData = await historyResponse.json();
+                    this.items = historyData.items;
+                    this.pagination = historyData.pagination;
+                } else {
+                    console.error('히스토리 로딩 실패:', await historyResponse.text());
+                    // 인증 오류인 경우 로그인 페이지로 리다이렉트
+                    if (historyResponse.status === 401) {
+                        alert('로그인이 필요합니다.');
+                        window.location.href = '/login';
+                        return;
+                    }
+                }
+                
+                if (statsResponse.ok) {
+                    this.stats = await statsResponse.json();
+                } else {
+                    console.error('통계 로딩 실패:', await statsResponse.text());
+                }
+                
+            } catch (error) {
+                console.error('히스토리 로딩 오류:', error);
+                alert('히스토리를 불러오는 중 오류가 발생했습니다.');
+            } finally {
+                this.loading = false;
+            }
+        },
+        
+        async regenerateItem(generationId) {
+            if (!confirm('이 썸네일을 재생성하시겠습니까?')) return;
+            
+            try {
+                const response = await fetch(`/api/history/${generationId}/regenerate`, {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    alert(`재생성 완료! ${result.images.length}장의 새 썸네일이 생성되었습니다.`);
+                    await this.loadHistory(this.pagination.page);
+                } else {
+                    const error = await response.json();
+                    alert(`재생성 실패: ${error.detail || '알 수 없는 오류'}`);
+                }
+            } catch (error) {
+                console.error('재생성 오류:', error);
+                alert('재생성 중 오류가 발생했습니다.');
+            }
+        },
+        
+        async deleteItem(generationId) {
+            if (!confirm('정말로 이 생성 기록을 삭제하시겠습니까?\n관련된 모든 이미지가 함께 삭제됩니다.')) return;
+            
+            try {
+                const response = await fetch(`/api/history/${generationId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    alert('생성 기록이 삭제되었습니다.');
+                    await this.loadHistory(this.pagination.page);
+                } else {
+                    const error = await response.json();
+                    alert(`삭제 실패: ${error.detail || '알 수 없는 오류'}`);
+                }
+            } catch (error) {
+                console.error('삭제 오류:', error);
+                alert('삭제 중 오류가 발생했습니다.');
+            }
+        },
+        
+        formatDate(dateStr) {
+            return new Date(dateStr).toLocaleDateString('ko-KR', {
+                year: 'numeric',
+                month: 'short', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        },
+        
+        getStatusText(status) {
+            const statusMap = {
+                'completed': '완료',
+                'processing': '생성중',
+                'pending': '대기중',
+                'error': '실패'
+            };
+            return statusMap[status] || status;
+        },
+        
+        getStatusStyle(status) {
+            const styleMap = {
+                'completed': 'bg-green-100 text-green-800',
+                'processing': 'bg-yellow-100 text-yellow-800',
+                'pending': 'bg-blue-100 text-blue-800',
+                'error': 'bg-red-100 text-red-800'
+            };
+            return styleMap[status] || 'bg-gray-100 text-gray-800';
+        },
+        
+        getStyleName(preset) {
+            const styleMap = {
+                'bold': '강렬한',
+                'minimal': '미니멀',
+                'comic': '코믹',
+                'tech': '테크'
+            };
+            return styleMap[preset] || preset;
+        },
+        
+        getPageNumbers() {
+            const current = this.pagination.page;
+            const total = this.pagination.pages;
+            const numbers = [];
+            
+            // 간단한 페이지 번호 생성 (현재 페이지 주변 5개)
+            const start = Math.max(1, current - 2);
+            const end = Math.min(total, current + 2);
+            
+            for (let i = start; i <= end; i++) {
+                numbers.push(i);
+            }
+            
+            return numbers;
+        },
+        
+        openImageModal(imageUrl) {
+            // 이미지 모달 (index.html과 동일한 구현)
+            const modal = window.open('', '_blank');
+            modal.document.write(`
+                <html>
+                    <head>
+                        <title>썸네일 미리보기 - thumbanana</title>
+                        <style>
+                            body {
+                                margin: 0;
+                                background: #000;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                min-height: 100vh;
+                                font-family: system-ui, -apple-system, sans-serif;
+                            }
+                            .container {
+                                text-align: center;
+                                padding: 20px;
+                            }
+                            .image {
+                                max-width: 95vw;
+                                max-height: 85vh;
+                                object-fit: contain;
+                                box-shadow: 0 10px 30px rgba(255, 255, 255, 0.1);
+                                border-radius: 8px;
+                            }
+                            .controls {
+                                margin-top: 20px;
+                            }
+                            .btn {
+                                background: #f97316;
+                                color: white;
+                                padding: 8px 16px;
+                                border: none;
+                                border-radius: 6px;
+                                cursor: pointer;
+                                margin: 0 5px;
+                                text-decoration: none;
+                                display: inline-block;
+                            }
+                            .btn:hover {
+                                background: #ea580c;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <img src="${imageUrl}" class="image" alt="썸네일 미리보기">
+                            <div class="controls">
+                                <a href="${imageUrl}" download class="btn">📥 다운로드</a>
+                                <button onclick="window.close()" class="btn">❌ 닫기</button>
+                            </div>
+                        </div>
+                    </body>
+                </html>
+            `);
+        }
+    };
+}
+</script>
+{% endblock %}

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ t.meta.page_title }}{% endblock %}</title>
+    
+    <!-- CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', path='/css/styles.css') }}" rel="stylesheet">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', path='/images/favicon.ico') }}">
+    
+    <!-- Meta tags for SEO -->
+    <meta name="description" content="{{ t.meta.description }}">
+    <meta name="keywords" content="{{ t.meta.keywords }}">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="{{ t.meta.og_title }}">
+    <meta property="og:description" content="{{ t.meta.og_description }}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.url }}">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="{% if lang == 'en' %}/en{% else %}/{% endif %}" class="flex-shrink-0 flex items-center">
+                        <span class="text-2xl font-bold text-orange-500">{{ t.nav.brand }}</span>
+                    </a>
+                </div>
+                
+                <div class="flex items-center space-x-4" x-data="navigation()" x-init="checkAuth()">
+                    <!-- Language Switch -->
+                    <div class="flex items-center space-x-2 text-sm">
+                        {% if lang == 'en' %}
+                            <a href="{{ request.url.path.replace('/en', '') }}" class="text-gray-500 hover:text-orange-500">한국어</a>
+                            <span class="text-orange-500 font-medium">English</span>
+                        {% else %}
+                            <span class="text-orange-500 font-medium">한국어</span>
+                            <a href="/en{{ request.url.path }}" class="text-gray-500 hover:text-orange-500">English</a>
+                        {% endif %}
+                    </div>
+                    
+                    <a href="/docs" class="text-gray-500 hover:text-gray-900 px-3 py-2 text-sm font-medium">{{ t.nav.api_docs }}</a>
+                    
+                    <!-- 비로그인 사용자 메뉴 -->
+                    <template x-if="!isAuthenticated">
+                        <div class="flex items-center space-x-4">
+                            <a href="{% if lang == 'en' %}/en{% endif %}/login" class="text-gray-500 hover:text-gray-900 px-3 py-2 text-sm font-medium">{{ t.nav.login }}</a>
+                            <a href="{% if lang == 'en' %}/en{% endif %}/register" class="bg-orange-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-orange-600">{{ t.nav.register }}</a>
+                        </div>
+                    </template>
+                    
+                    <!-- 로그인 사용자 메뉴 -->
+                    <template x-if="isAuthenticated">
+                        <div class="flex items-center space-x-4">
+                            <a href="{% if lang == 'en' %}/en{% endif %}/history" class="text-gray-500 hover:text-gray-900 px-3 py-2 text-sm font-medium flex items-center">
+                                <span>{{ t.nav.history }}</span>
+                            </a>
+                            <div class="flex items-center text-sm text-gray-600">
+                                <span x-text="userEmail" class="max-w-32 truncate"></span>
+                            </div>
+                            <button @click="logout()" class="text-gray-500 hover:text-gray-900 px-3 py-2 text-sm font-medium">
+                                {{ t.nav.logout }}
+                            </button>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t mt-12">
+        <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <div class="text-center text-gray-500 text-sm">
+                <p>{{ t.footer.copyright }}</p>
+                <div class="mt-2 space-x-4">
+                    <a href="/terms" class="hover:text-gray-900">{{ t.footer.terms }}</a>
+                    <a href="/privacy" class="hover:text-gray-900">{{ t.footer.privacy }}</a>
+                    <a href="https://github.com/your-username/thumbanana" class="hover:text-gray-900">{{ t.footer.github }}</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    <script src="https://unpkg.com/alpinejs@3.13.2/dist/cdn.min.js" defer></script>
+    <script src="{{ url_for('static', path='/js/app.js') }}"></script>
+    
+    <!-- 네비게이션 스크립트 -->
+    <script>
+    function navigation() {
+        return {
+            isAuthenticated: false,
+            userEmail: '',
+            
+            async checkAuth() {
+                try {
+                    const response = await fetch('/api/auth/check');
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.isAuthenticated = data.authenticated;
+                        if (data.user) {
+                            this.userEmail = data.user.email;
+                        }
+                    } else {
+                        this.isAuthenticated = false;
+                    }
+                } catch (error) {
+                    console.error('인증 확인 실패:', error);
+                    this.isAuthenticated = false;
+                }
+            },
+            
+            async logout() {
+                if (!confirm('{{ t.nav.logout_confirm }}')) return;
+                
+                try {
+                    const response = await fetch('/api/auth/logout', { 
+                        method: 'POST' 
+                    });
+                    
+                    // 성공/실패 여부와 상관없이 메인 페이지로 이동
+                    alert('로그아웃되었습니다.');
+                    window.location.href = '/';
+                } catch (error) {
+                    console.error('로그아웃 실패:', error);
+                    // 실패해도 메인 페이지로 이동
+                    window.location.href = '/';
+                }
+            }
+        };
+    }
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>
