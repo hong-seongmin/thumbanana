@@ -24,7 +24,7 @@ RUN uv sync --frozen --no-dev
 COPY . .
 
 # 필요한 디렉토리 생성
-RUN mkdir -p storage/uploads storage/generated storage/cache logs
+RUN mkdir -p data storage/uploads storage/generated storage/cache logs
 
 # 포트 노출
 EXPOSE 8000
@@ -33,5 +33,9 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:8000/api/health || exit 1
 
+# entrypoint 스크립트 복사 및 권한 설정
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 # 애플리케이션 실행
-CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["/entrypoint.sh"]

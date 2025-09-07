@@ -17,7 +17,7 @@ services:
       - PORT=8000
       
       # 데이터베이스 설정
-      - DATABASE_URL=sqlite:///./thumbanana.db
+      - DATABASE_URL=sqlite:////app/data/thumbanana.db
       
       # 파일 저장 설정
       - UPLOAD_DIR=./storage/uploads
@@ -44,9 +44,9 @@ services:
       - CACHE_MAX_SIZE=1000
     
     volumes:
+      - ./data:/app/data
       - ./storage:/app/storage
       - ./logs:/app/logs
-      - ./thumbanana.db:/app/thumbanana.db
     
     restart: unless-stopped
     

@@ -14,8 +14,8 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
     
-    # Database
-    database_url: str = "sqlite:///./thumbanana.db"
+    # Database  
+    database_url: str = "sqlite:////app/data/thumbanana.db"
     
     # Storage
     upload_dir: str = "./storage/uploads"
