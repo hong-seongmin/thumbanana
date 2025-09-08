@@ -37,7 +37,7 @@
                     <!-- Language Switch -->
                     <div class="flex items-center space-x-2 text-sm">
                         {% if lang == 'en' %}
-                            <a href="{{ request.url.path.replace('/en', '') }}" class="text-gray-500 hover:text-orange-500">한국어</a>
+                            <a href="{% if request.url.path == '/en' %}/{% else %}{{ request.url.path.replace('/en', '') }}{% endif %}" class="text-gray-500 hover:text-orange-500">한국어</a>
                             <span class="text-orange-500 font-medium">English</span>
                         {% else %}
                             <span class="text-orange-500 font-medium">한국어</span>
