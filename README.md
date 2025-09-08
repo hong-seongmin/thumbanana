@@ -195,6 +195,12 @@ If you encounter any issues or have questions:
 - [TailwindCSS](https://tailwindcss.com/) - Utility-first CSS framework
 - [Alpine.js](https://alpinejs.dev/) - Lightweight JavaScript framework
 
+## ☕ Support This Project
+
+If you find Thumbanana useful, consider supporting the project:
+
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-support-orange?style=for-the-badge&logo=buy-me-a-coffee)](https://buymeacoffee.com/oursophy)
+
 ---
 
 Made with ❤️ for YouTube creators worldwide
