@@ -36,12 +36,20 @@ def load_translations(language: str) -> Dict[str, Any]:
 
 def get_user_language(request) -> str:
     """요청에서 사용자 언어 감지"""
-    # URL 경로에서 언어 확인 (예: /en/)
+    # URL 경로 기반 언어 감지 (최우선)
     path = request.url.path
+    
+    # 영어 경로 확인
     if path.startswith('/en'):
         return 'en'
     
-    # Accept-Language 헤더에서 언어 감지
+    # 한국어 경로 확인 (명시적으로 한국어 경로들 처리)
+    korean_paths = ['/', '/login', '/register', '/history']
+    if path in korean_paths or (path not in korean_paths and not path.startswith('/en')):
+        return 'ko'
+    
+    # 위의 조건에 해당하지 않는 경우에만 브라우저 언어 확인
+    # (실제로는 거의 실행되지 않음 - 안전장치)
     accept_language = request.headers.get('accept-language', '')
     
     # 영어 선호도 확인
